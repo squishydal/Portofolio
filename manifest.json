@@ -1,0 +1,39 @@
+{
+  "name": "Tora Sifa - Terminal Resume",
+  "short_name": "Terminal Resume",
+  "description": "Interactive terminal-style resume of Tora Sifa, Full Stack Developer",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0c0615",
+  "theme_color": "#1a0f2e",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["portfolio", "productivity", "utilities"],
+  "screenshots": [
+    {
+      "src": "/screenshot-desktop.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/screenshot-mobile.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ]
+}
