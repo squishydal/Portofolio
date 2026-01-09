@@ -19,16 +19,70 @@ export function setupInputHandler(term, utils, state) {
     prompt(state.cwd);
   }
 
-  // Mobile support - tap to focus
+  // Mobile keyboard support - create hidden input
   const container = document.getElementById("terminal");
-  if (container) {
-    container.addEventListener("click", () => {
-      term.focus();
+  let mobileInput = null;
+
+  const isMobile =
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent,
+    );
+
+  if (isMobile) {
+    // Create hidden input for mobile
+    mobileInput = document.createElement("input");
+    mobileInput.type = "text";
+    mobileInput.autocomplete = "off";
+    mobileInput.autocorrect = "off";
+    mobileInput.autocapitalize = "off";
+    mobileInput.spellcheck = false;
+    mobileInput.style.position = "absolute";
+    mobileInput.style.left = "-9999px";
+    mobileInput.style.top = "0";
+    document.body.appendChild(mobileInput);
+
+    // Focus mobile input when tapping terminal
+    const focusMobileInput = (e) => {
+      e.preventDefault();
+      mobileInput.value = state.inputBuffer;
+      mobileInput.focus();
+    };
+
+    container.addEventListener("click", focusMobileInput);
+    container.addEventListener("touchstart", focusMobileInput);
+
+    // Handle mobile input
+    mobileInput.addEventListener("input", (e) => {
+      const newValue = e.target.value;
+      state.inputBuffer = newValue;
+      state.cursorPos = newValue.length;
+      resetInputDisplay(state.cwd, state.inputBuffer);
     });
 
-    container.addEventListener("touchstart", () => {
-      term.focus();
+    // Handle mobile enter
+    mobileInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        mobileInput.value = "";
+        acceptInput();
+      }
     });
+
+    // Keep mobile input focused
+    mobileInput.addEventListener("blur", () => {
+      setTimeout(() => {
+        if (document.activeElement !== mobileInput) {
+          mobileInput.focus();
+        }
+      }, 100);
+    });
+  } else {
+    // Desktop - normal focus
+    if (container) {
+      container.addEventListener("click", () => {
+        term.focus();
+      });
+    }
   }
 
   term.onKey((e) => {
@@ -36,6 +90,7 @@ export function setupInputHandler(term, utils, state) {
     const key = e.key;
 
     if (ev.key === "Enter") {
+      if (mobileInput) mobileInput.value = "";
       acceptInput();
       return;
     }
@@ -46,6 +101,7 @@ export function setupInputHandler(term, utils, state) {
           state.inputBuffer.slice(0, state.cursorPos - 1) +
           state.inputBuffer.slice(state.cursorPos);
         state.cursorPos--;
+        if (mobileInput) mobileInput.value = state.inputBuffer;
         resetInputDisplay(state.cwd, state.inputBuffer);
         // Move cursor to correct position
         const moveCursorBack = state.inputBuffer.length - state.cursorPos;
@@ -72,6 +128,7 @@ export function setupInputHandler(term, utils, state) {
       } else {
         state.inputBuffer = result;
         state.cursorPos = result.length;
+        if (mobileInput) mobileInput.value = result;
         resetInputDisplay(state.cwd, state.inputBuffer);
       }
       return;
@@ -104,6 +161,7 @@ export function setupInputHandler(term, utils, state) {
       else state.historyPos = Math.max(0, state.historyPos - 1);
       state.inputBuffer = state.history[state.historyPos];
       state.cursorPos = state.inputBuffer.length;
+      if (mobileInput) mobileInput.value = state.inputBuffer;
       resetInputDisplay(state.cwd, state.inputBuffer);
       return;
     }
@@ -124,6 +182,7 @@ export function setupInputHandler(term, utils, state) {
         state.inputBuffer = "";
       }
       state.cursorPos = state.inputBuffer.length;
+      if (mobileInput) mobileInput.value = state.inputBuffer;
       resetInputDisplay(state.cwd, state.inputBuffer);
       return;
     }
@@ -131,6 +190,7 @@ export function setupInputHandler(term, utils, state) {
     if (ev.ctrlKey && ev.key === "c") {
       state.inputBuffer = "";
       state.cursorPos = 0;
+      if (mobileInput) mobileInput.value = "";
       writeln("^C");
       prompt(state.cwd);
       return;
@@ -172,6 +232,7 @@ export function setupInputHandler(term, utils, state) {
         state.inputBuffer =
           state.inputBuffer.slice(0, state.cursorPos) +
           state.inputBuffer.slice(state.cursorPos + 1);
+        if (mobileInput) mobileInput.value = state.inputBuffer;
         resetInputDisplay(state.cwd, state.inputBuffer);
         // Move cursor to correct position
         const moveCursorBack = state.inputBuffer.length - state.cursorPos;
@@ -212,6 +273,7 @@ export function setupInputHandler(term, utils, state) {
         key +
         state.inputBuffer.slice(state.cursorPos);
       state.cursorPos++;
+      if (mobileInput) mobileInput.value = state.inputBuffer;
 
       // Redraw from cursor position
       const restOfLine = state.inputBuffer.slice(state.cursorPos - 1);
